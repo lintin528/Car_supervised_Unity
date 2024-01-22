@@ -14,8 +14,6 @@ using WebSocketSharp;
 using MiniJSON;
 
 
-
-
 public class TrainingManager : MonoBehaviour
 {
     string topicName = "/Unity_2_AI";
@@ -34,6 +32,8 @@ public class TrainingManager : MonoBehaviour
         Run
     }
     Phase phase;
+    public float stepTime = 0.5f; //0.1f
+    public float currentStepTime = 0.0f;
     Vector3 newTarget;
     List<float> wheelvelocity = new List<float>();
     public System.Random random = new System.Random();
@@ -57,16 +57,17 @@ public class TrainingManager : MonoBehaviour
         public int[] dim;
         public int data_offset;
     }
+    Transform baselink;
+    Vector3 carPos;
+    public string mode = "train1";
+    float key = 0;
+    public float delayInSeconds = 0f;
+
     void Awake()
     {
         base_footprint = robot.transform.Find("base_link");
     }
 
-    Transform baselink;
-    Vector3 carPos;
-    string mode = "train1";
-    float key = 0;
-    public float delayInSeconds = 0f;
     void Start()
     {
         StartCoroutine(DelayedExecution());
@@ -80,22 +81,20 @@ public class TrainingManager : MonoBehaviour
         newTarget = GetTargetPosition(target, newTarget);
         socket = new WebSocket(rosbridgeServerUrl);
 
-        if (mode == "train")
+        if (mode == "train1")
         {
             socket.OnOpen += (sender, e) =>
             {
                 SubscribeToTopic(topicName_receive);
+                Debug.Log("subscribe to " + topicName_receive + " topic");
             };
             socket.OnMessage += OnWebSocketMessage;
         }
 
-
         socket.Connect();
 
         State state = robot.GetState(newTarget);
-
         Send(state);
-        // 在延迟后执行的代码
 
         Debug.Log("程式碼在 " + delayInSeconds + " 秒後執行了！");
     }
@@ -104,7 +103,7 @@ public class TrainingManager : MonoBehaviour
 
     void Update()
     {
-        if (mode == "train")
+        if (mode == "train1")
         {
             if (key == 1)
             {
@@ -129,7 +128,6 @@ public class TrainingManager : MonoBehaviour
 
     void CarMove()
     {
-
         if (Input.GetKey(KeyCode.W))
         {
             WheelSpeed(600f, 600f);
@@ -142,16 +140,14 @@ public class TrainingManager : MonoBehaviour
         {
             WheelSpeed(-600f, 600f);
         }
+        else if (Input.GetKey(KeyCode.S))
+        {
+            WheelSpeed(0f, 0f);
+        }
         else if (Input.GetKey(KeyCode.E))
         {
             exitUnityAndStoreData();
         }
-        else
-        {
-            WheelSpeed(0f, 0f);
-        }
-
-
     }
 
     void exitUnityAndStoreData()
@@ -188,56 +184,82 @@ public class TrainingManager : MonoBehaviour
         action.voltage.Add(rightWheel);
         robot.DoAction(action);
 
-        if (leftWheel != 0f && rightWheel != 0f)
-        {
-            State state = robot.GetState(newTarget);
-            Send(state);
-        }
+        State state = robot.GetState(newTarget);
+        Send(state);
     }
-
-
 
     private void OnWebSocketMessage(object sender, MessageEventArgs e)
     {
         string jsonString = e.Data;
         RobotNewsMessage message = JsonUtility.FromJson<RobotNewsMessage>(jsonString);
         float[] data = message.msg.data;
+        float left = 0f;
+        float right = 0f;
+        Robot.Action action = new Robot.Action();
+        action.voltage = new List<float>();
         switch (data[0])
         {
-            case 0:
-                Robot.Action action = new Robot.Action();
-                action.voltage = new List<float>();
-                data[1] = (float)data[1];
-                float left = 0f;
-                float right = 0f;
-                Debug.Log(data[1]);
-                if(data[1] == 0f){
-                    left = 300f;
-                    right = 300f;
-                }
-
-
+            case 3:
+                left = 0f;
+                right = 0f;
                 action.voltage.Add(left);
                 action.voltage.Add(right);
                 robot.DoAction(action);
-
-                key = 1;
-
                 break;
-
+            case 0:
+                left = 300f;
+                right = 300f;
+                action.voltage.Add(left);
+                action.voltage.Add(right);
+                robot.DoAction(action);
+                break;
+            case 1:
+                left = -300f;
+                right = 300f;
+                action.voltage.Add(left);
+                action.voltage.Add(right);
+                robot.DoAction(action);
+                break;
+            case 2:
+                left = 300f;
+                right = -300f;
+                action.voltage.Add(left);
+                action.voltage.Add(right);
+                robot.DoAction(action);
+                break;
         }
+        StartStep();
+    }
+
+    void StartStep()
+    {
+        phase = Phase.Run;
+        currentStepTime = 0;
+        Time.timeScale = 1;
+    }
+
+    void FixedUpdate()
+    {
+        if (phase == Phase.Run)
+            currentStepTime += Time.fixedDeltaTime;
+        if (phase == Phase.Run && currentStepTime >= stepTime)
+        {
+            EndStep();
+        }
+    }
+
+    void EndStep()
+    {
+        phase = Phase.Freeze;
+        State state = robot.GetState(newTarget);
+        Send(state);
     }
 
     State updateState(Vector3 newTarget, List<float> wheelvelocity)
     {
         State state = robot.GetState(newTarget);
-
         return state;
     }
-
-
-
-
 
     void Send(object data)
     {
@@ -264,18 +286,18 @@ public class TrainingManager : MonoBehaviour
                 }
            }
         };
-
         string jsonMessage = MiniJSON.Json.Serialize(message);
-
         try
         {
             socket.Send(jsonMessage);
+            Debug.Log("send updated state");
         }
         catch
         {
             Debug.Log("error-send");
         }
     }
+
     private void SubscribeToTopic(string topic)
     {
         string subscribeMessage = "{\"op\":\"subscribe\",\"id\":\"1\",\"topic\":\"" + topic + "\",\"type\":\"std_msgs/msg/Float32MultiArray\"}";

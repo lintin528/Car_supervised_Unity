@@ -31,6 +31,8 @@ public class Robot : MonoBehaviour
         motorListMF = new List<MotorMoveForward>() {
             Util.GetOrAddComponent<MotorMoveForward>(transform, "left_back_forward_wheel"),
             Util.GetOrAddComponent<MotorMoveForward>(transform, "right_back_forward_wheel"),
+            Util.GetOrAddComponent<MotorMoveForward>(transform, "left_front_forward_wheel"),
+            Util.GetOrAddComponent<MotorMoveForward>(transform, "right_front_forward_wheel"),
         };
 
     }
@@ -65,7 +67,6 @@ public class Robot : MonoBehaviour
             ROS2Range = range.ToArray(),
             ROS2RangePosition = rangeDirection.ToArray(),
         };
-
         return ROS2State;
     }
 
