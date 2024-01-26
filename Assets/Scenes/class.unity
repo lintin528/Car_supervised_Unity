@@ -2820,7 +2820,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4938201499355078075, guid: 5bacd12ef36b1554aa7ecc058c042a78, type: 3}
       propertyPath: mode
-      value: train1
+      value: data
       objectReference: {fileID: 0}
     - target: {fileID: 4938201499355078075, guid: 5bacd12ef36b1554aa7ecc058c042a78, type: 3}
       propertyPath: robot
@@ -4402,7 +4402,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1153791223}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
   m_LocalPosition: {x: 0, y: 0.165, z: -0.0675}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -4410,7 +4410,7 @@ Transform:
   - {fileID: 1694146640}
   - {fileID: 1497764294}
   m_Father: {fileID: 243957272}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!1 &1156091508
 GameObject:
   m_ObjectHideFlags: 0
