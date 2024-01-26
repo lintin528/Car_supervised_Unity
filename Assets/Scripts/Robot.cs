@@ -73,7 +73,10 @@ public class Robot : MonoBehaviour
     public void DoAction(Action action)
     {
         motorListMF[0].SetVoltage((float)action.voltage[0]);
+        motorListMF[2].SetVoltage((float)action.voltage[0]);
+        
         motorListMF[1].SetVoltage((float)action.voltage[1]);
+        motorListMF[3].SetVoltage((float)action.voltage[1]);
     }
     Vector3 ToRosVec(Vector3 position)
     {

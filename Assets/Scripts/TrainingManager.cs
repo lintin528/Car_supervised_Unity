@@ -59,7 +59,7 @@ public class TrainingManager : MonoBehaviour
     }
     Transform baselink;
     Vector3 carPos;
-    public string mode = "train1";
+    public string mode = "inference";
     float key = 0;
     public float delayInSeconds = 0f;
 
@@ -81,7 +81,7 @@ public class TrainingManager : MonoBehaviour
         newTarget = GetTargetPosition(target, newTarget);
         socket = new WebSocket(rosbridgeServerUrl);
 
-        if (mode == "train1")
+        if (mode == "inference")
         {
             socket.OnOpen += (sender, e) =>
             {
@@ -103,7 +103,7 @@ public class TrainingManager : MonoBehaviour
 
     void Update()
     {
-        if (mode == "train1")
+        if (mode == "inference")
         {
             if (key == 1)
             {
@@ -113,9 +113,14 @@ public class TrainingManager : MonoBehaviour
                 key = 0;
             }
         }
-        else
+        else if (mode == "data")
         {
             CarMove();
+        }
+        else
+        {
+            Debug.Log("please set the correct mode.");
+            UnityEditor.EditorApplication.isPlaying = false;
         }
     }
 
@@ -200,29 +205,29 @@ public class TrainingManager : MonoBehaviour
         switch (data[0])
         {
             case 3:
-                left = 0f;
-                right = 0f;
+                left = 300f;
+                right = 300f;
                 action.voltage.Add(left);
                 action.voltage.Add(right);
                 robot.DoAction(action);
                 break;
             case 0:
-                left = 300f;
-                right = 300f;
+                left = 600f;
+                right = 600f;
                 action.voltage.Add(left);
                 action.voltage.Add(right);
                 robot.DoAction(action);
                 break;
             case 1:
-                left = -300f;
-                right = 300f;
+                left = -600f;
+                right = 600f;
                 action.voltage.Add(left);
                 action.voltage.Add(right);
                 robot.DoAction(action);
                 break;
             case 2:
-                left = 300f;
-                right = -300f;
+                left = 600f;
+                right = -600f;
                 action.voltage.Add(left);
                 action.voltage.Add(right);
                 robot.DoAction(action);
@@ -290,7 +295,6 @@ public class TrainingManager : MonoBehaviour
         try
         {
             socket.Send(jsonMessage);
-            Debug.Log("send updated state");
         }
         catch
         {
